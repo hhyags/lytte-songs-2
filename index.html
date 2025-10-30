@@ -1,47 +1,433 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lytte Songs</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'brand-bg': '#121212',
-              'brand-surface': '#1E1E1E',
-              'brand-ui': '#282828',
-              'brand-ui-hover': '#3A3A3A',
-              'brand-text': '#FFFFFF',
-              'brand-text-secondary': '#B3B3B3',
-              'brand-accent': '#1DB954',
-              'brand-accent-hover': '#1ED760',
-            },
-            fontFamily: {
-                sans: ['Inter', 'sans-serif'],
-            },
-          },
-        },
-      }
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <script type="importmap">
+    <style>
+        :root {
+            --brand-bg: #121212;
+            --brand-surface: #1E1E1E;
+            --brand-ui: #282828;
+            --brand-ui-hover: #3A3A3A;
+            --brand-text: #FFFFFF;
+            --brand-text-secondary: #B3B3B3;
+            --brand-accent: #1DB954;
+            --brand-accent-hover: #1ED760;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--brand-bg);
+            color: var(--brand-text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- Sidenav --- */
+        .sidenav {
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--brand-bg);
+            border-right: 1px solid var(--brand-ui);
+            transition: all 300ms ease-in-out;
+            z-index: 30;
+            width: 240px; /* 60 * 4 = w-60 */
+            padding: 1rem;
+        }
+        .sidenav.collapsed {
+            width: 80px; /* 20 * 4 = w-20 */
+            padding: 0.5rem;
+        }
+        .sidenav .logo {
+            height: 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--brand-accent);
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+            font-size: 1.875rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        .sidenav.collapsed .logo .logo-text { display: none; }
+        .sidenav .logo .logo-icon { display: none; }
+        .sidenav.collapsed .logo .logo-icon { display: block; font-size: 1.5rem; }
+
+        .sidenav-list { list-style: none; space-y: 0.5rem; }
+        .sidenav-list .nav-item button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            text-align: left;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: color 0.2s, background-color 0.2s;
+            padding: 0.75rem;
+            gap: 1rem;
+            color: var(--brand-text-secondary);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .sidenav.collapsed .nav-item button { justify-content: center; }
+        .sidenav .nav-item button:hover { color: var(--brand-text); }
+        .sidenav .nav-item button.active { background-color: var(--brand-ui-hover); color: var(--brand-text); }
+        .sidenav .nav-item-icon { font-size: 1.125rem; width: 1.5rem; text-align: center; }
+        .sidenav .nav-item-label { display: block; }
+        .sidenav.collapsed .nav-item-label { display: none; }
+
+        /* --- Main Content --- */
+        main {
+            transition: margin-left 300ms ease-in-out;
+            margin-left: 240px;
+        }
+        main.sidenav-collapsed { margin-left: 80px; }
+        .main-content-padding { padding: 1rem 1.5rem; }
+
+        /* --- Header --- */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background-color: rgba(18, 18, 18, 0.8);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        .header .nav-toggle {
+            color: var(--brand-text-secondary);
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            transition: color 0.2s, background-color 0.2s;
+            background: none; border: none; cursor: pointer;
+        }
+        .header .nav-toggle:hover { color: var(--brand-text); background-color: var(--brand-ui); }
+        .header .profile-button {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            background: none; border: none;
+        }
+        .header .profile-name {
+            display: none;
+            color: var(--brand-text-secondary);
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        @media (min-width: 640px) { .header .profile-name { display: inline; } }
+        .header .profile-button:hover .profile-name { color: var(--brand-text); }
+        .header .profile-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            border: 2px solid var(--brand-accent);
+            object-fit: cover;
+            transition: box-shadow 0.2s;
+        }
+        .header .profile-button:hover .profile-avatar { box-shadow: 0 0 0 2px var(--brand-accent-hover); }
+
+        /* --- Generic View & Track List --- */
+        .view-container { max-width: 80rem; margin: 0 auto; }
+        .content-surface { background-color: var(--brand-surface); border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); padding: 1.5rem; }
+        .view-title { font-size: 2.25rem; font-weight: 700; margin-bottom: 1.5rem; }
+        .track-list { list-style: none; space-y: 0.5rem; }
+        .track-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .track-item:hover { background-color: var(--brand-ui-hover); }
+        .track-item.active { background-color: rgba(29, 185, 84, 0.2); }
+        .track-item-main { display: flex; align-items: center; gap: 1rem; width: 100%; overflow: hidden; }
+        .track-item-num { width: 1.5rem; text-align: center; color: var(--brand-text-secondary); }
+        .track-item-num .icon { color: var(--brand-accent); }
+        .track-item-details { overflow: hidden; }
+        .track-item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-item.active .track-item-title { color: var(--brand-accent); }
+        .track-item-artist { font-size: 0.875rem; color: var(--brand-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-item-controls { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; padding-left: 0.5rem; }
+        .track-item-controls button {
+            color: var(--brand-text-secondary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .track-item-controls button:hover { color: var(--brand-accent); }
+        .track-item-controls .like-btn.liked { color: var(--brand-accent); }
+        .track-item-duration { font-size: 0.875rem; color: var(--brand-text-secondary); width: 2.5rem; text-align: right; display: none; }
+        @media (min-width: 640px) { .track-item-duration { display: inline; } }
+
+        /* Home View */
+        .home-view { display: flex; flex-direction: column; gap: 1.5rem; }
+        @media (min-width: 768px) { .home-view { flex-direction: row; gap: 2rem; } }
+        .home-view .album-cover-container { flex-shrink: 0; }
+        @media (min-width: 768px) { .home-view .album-cover-container { width: 33.333%; } }
+        .home-view .album-cover { width: 100%; height: auto; aspect-ratio: 1/1; border-radius: 0.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .home-view .album-details { display: flex; flex-direction: column; }
+        .home-view .album-details-grow { flex-grow: 1; }
+        .home-view .album-title { font-size: 2.25rem; font-weight: 700; }
+        .home-view .album-artist { font-size: 1.25rem; color: var(--brand-text-secondary); margin-top: 0.5rem; }
+        .play-album-btn {
+            margin-top: 1.5rem;
+            background-color: var(--brand-accent);
+            color: var(--brand-bg);
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .play-album-btn:hover { background-color: var(--brand-accent-hover); transform: scale(1.05); }
+        .tracks-header { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; margin-top: 2rem; }
+
+        /* Profile View */
+        .profile-view { max-width: 28rem; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+        .profile-view .avatar-container { position: relative; }
+        .profile-view .avatar-img { width: 8rem; height: 8rem; border-radius: 9999px; border: 4px solid var(--brand-ui); object-fit: cover; }
+        .profile-view .avatar-container:hover .avatar-img { opacity: 0.7; }
+        .profile-view .avatar-edit-btn {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0,0,0,0.5); border-radius: 9999px; opacity: 0; transition: opacity 0.2s;
+            cursor: pointer; border: none; color: white; font-size: 1.5rem;
+        }
+        .profile-view .avatar-container:hover .avatar-edit-btn { opacity: 1; }
+        .profile-view .form-group { width: 100%; margin-top: 1.5rem; }
+        .profile-view .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--brand-text-secondary); margin-bottom: 0.5rem; }
+        .profile-view .form-input {
+            width: 100%; padding: 0.75rem; background-color: var(--brand-ui); border: 1px solid var(--brand-ui-hover);
+            border-radius: 0.375rem; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .profile-view .form-input:focus { outline: none; box-shadow: 0 0 0 2px var(--brand-accent); }
+        .profile-view .footer-text { font-size: 0.875rem; color: var(--brand-text-secondary); margin-top: auto; padding-top: 1rem; }
+
+        /* Local Files View */
+        .upload-btn {
+            margin-bottom: 1.5rem;
+            background-color: var(--brand-accent); color: var(--brand-bg); font-weight: 700;
+            padding: 0.5rem 1rem; border-radius: 9999px; display: inline-flex; align-items: center; gap: 0.5rem;
+            border: none; cursor: pointer; transition: transform 0.2s, background-color 0.2s;
+        }
+        .upload-btn:hover { background-color: var(--brand-accent-hover); transform: scale(1.05); }
+
+        /* Player Bar */
+        .player-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--brand-ui);
+            height: 5rem; display: flex; align-items: center; padding: 0 1rem; z-index: 40;
+        }
+        body.player-active { padding-bottom: 5rem; }
+        .player-bar .progress-bar-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 0.25rem; background-color: var(--brand-ui-hover); cursor: pointer;
+        }
+        .player-bar .progress-bar { height: 100%; background-color: var(--brand-accent); }
+        .player-bar .progress-bar-container:hover .progress-bar { background-color: var(--brand-accent-hover); }
+        .player-bar .track-info { width: 33.333%; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; }
+        .player-bar .track-info-cover { width: 3.5rem; height: 3.5rem; border-radius: 0.375rem; }
+        .player-bar .track-info-details { overflow: hidden; }
+        .player-bar .track-info-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-bar .track-info-artist { font-size: 0.875rem; color: var(--brand-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-bar .player-controls { width: 33.333%; display: flex; justify-content: center; }
+        .player-bar .play-toggle-btn {
+            font-size: 2.25rem; width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;
+            color: var(--brand-text); transition: color 0.2s; background: none; border: none; cursor: pointer;
+        }
+        .player-bar .play-toggle-btn:hover { color: var(--brand-accent); }
+        .player-bar .volume-controls-container { width: 33.333%; display: flex; justify-content: flex-end; }
+        .volume-control { display: none; }
+        @media (min-width: 768px) { .volume-control { display: flex; align-items: center; gap: 0.5rem; } }
+        .volume-control .mute-btn { width: 2rem; text-align: center; color: var(--brand-text-secondary); background: none; border: none; cursor: pointer; }
+        .volume-control .mute-btn:hover { color: var(--brand-text); }
+        .volume-control input[type=range] {
+            -webkit-appearance: none; appearance: none; width: 6rem; height: 0.25rem; background: var(--brand-ui-hover);
+            outline: none; border-radius: 0.5rem; cursor: pointer;
+        }
+        .volume-control input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 0.75rem; height: 0.75rem; background: var(--brand-text);
+            border-radius: 9999px; cursor: pointer;
+        }
+
+        /* Full Screen Player */
+        .player-screen {
+            position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(29, 185, 84, 0.5), rgba(18, 18, 18, 0.9));
+            -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+            z-index: 50; display: flex; flex-direction: column; padding: 2rem;
+            transform: translateY(100%); transition: transform 0.3s ease-in-out;
+        }
+        .player-screen.visible { transform: translateY(0); }
+        .player-screen .close-btn { position: absolute; top: 1.5rem; right: 1.5rem; font-size: 1.875rem; color: rgba(255,255,255,0.7); background: none; border: none; cursor: pointer; }
+        .player-screen .close-btn:hover { color: white; }
+        .player-screen .content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-top: 2rem; }
+        .player-screen .cover-art { width: 16rem; height: 16rem; border-radius: 0.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); margin-bottom: 2rem; }
+        @media (min-width: 640px) { .player-screen .cover-art { width: 20rem; height: 20rem; } }
+        .player-screen .track-title { font-size: 1.875rem; font-weight: 700; }
+        .player-screen .track-artist { font-size: 1.25rem; color: var(--brand-text-secondary); margin-top: 0.5rem; }
+        .player-screen .controls-wrapper { width: 100%; max-width: 36rem; margin: 0 auto; }
+        .player-screen .progress { display: flex; align-items: center; gap: 0.75rem; }
+        .player-screen .progress-time { font-size: 0.75rem; color: var(--brand-text-secondary); }
+        .player-screen input[type=range] { flex-grow: 1; background: var(--brand-ui-hover); }
+        .player-screen input[type=range]::-webkit-slider-thumb { background: var(--brand-accent); }
+        .player-screen .main-controls { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-top: 1rem; }
+        .player-screen .main-controls button { background: none; border: none; cursor: pointer; }
+        .player-screen .main-controls .icon-btn { font-size: 1.25rem; width: 2.5rem; height: 2.5rem; color: var(--brand-text-secondary); }
+        .player-screen .main-controls .icon-btn.active { color: var(--brand-accent); }
+        .player-screen .main-controls .icon-btn:hover { color: white; }
+        .player-screen .main-controls .prev-next-btn { font-size: 1.5rem; color: var(--brand-text-secondary); }
+        .player-screen .main-controls .prev-next-btn:hover { color: white; }
+        .player-screen .main-controls .play-btn { font-size: 4rem; color: white; transition: transform 0.2s; }
+        .player-screen .main-controls .play-btn:hover { transform: scale(1.05); }
+        .player-screen .mobile-volume { display: flex; justify-content: center; margin-top: 1.5rem; }
+        @media (min-width: 768px) { .player-screen .mobile-volume { display: none; } }
+        .player-screen .repeat-btn { position: relative; }
+        .player-screen .repeat-one-indicator {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 0.75rem; font-weight: 700;
+        }
+
+        /* Footer */
+        .footer { text-align: center; margin-top: 3rem; padding: 1.5rem 0; border-top: 1px solid var(--brand-ui); color: var(--brand-text-secondary); }
+        .footer .footer-title { font-weight: 600; }
+        .footer .footer-subtitle { font-size: 0.875rem; }
+
+        /* Helpers */
+        .hidden { display: none; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+    </style>
+<script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
   }
 }
 </script>
 </head>
-  <body class="bg-brand-bg text-brand-text">
-    <div id="root"></div>
-  </body>
+<body class="font-sans">
+    <nav id="sidenav" class="sidenav">
+        <div class="logo" data-navigate="home">
+            <span class="logo-text">LYTTE</span>
+            <i class="fas fa-headphones-alt logo-icon"></i>
+        </div>
+        <ul class="sidenav-list">
+            <li class="nav-item"><button data-navigate="home" class="active"><i class="fas fa-home nav-item-icon"></i> <span class="nav-item-label">Home</span></button></li>
+            <li class="nav-item"><button data-navigate="liked"><i class="fas fa-heart nav-item-icon"></i> <span class="nav-item-label">Liked Songs</span></button></li>
+            <li class="nav-item"><button data-navigate="history"><i class="fas fa-history nav-item-icon"></i> <span class="nav-item-label">History</span></button></li>
+            <li class="nav-item"><button data-navigate="local"><i class="fas fa-upload nav-item-icon"></i> <span class="nav-item-label">Local Files</span></button></li>
+            <li class="nav-item"><button data-navigate="profile"><i class="fas fa-user nav-item-icon"></i> <span class="nav-item-label">Profile</span></button></li>
+        </ul>
+    </nav>
+
+    <main id="main">
+        <header class="header">
+            <button id="nav-toggle" class="nav-toggle" aria-label="Toggle navigation menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <button id="profile-button" class="profile-button">
+                <span id="profile-name" class="profile-name"></span>
+                <img id="profile-avatar" src="" alt="User avatar" class="profile-avatar" />
+            </button>
+        </header>
+
+        <div class="main-content-padding">
+            <div id="view-container" class="view-container">
+                <!-- Content will be rendered here by JavaScript -->
+            </div>
+            <footer class="footer">
+                <p class="footer-title">Welcome to Lytte!</p>
+                <p class="footer-subtitle">Enjoy the music.</p>
+            </footer>
+        </div>
+    </main>
+
+    <div id="player-bar" class="player-bar hidden">
+        <div id="player-progress-container" class="progress-bar-container">
+            <div id="player-progress" class="progress-bar" style="width: 0%;"></div>
+        </div>
+        <div id="player-track-info" class="track-info">
+            <img id="player-cover" src="" alt="" class="track-info-cover" />
+            <div class="track-info-details">
+                <p id="player-title" class="track-info-title">Track Title</p>
+                <p id="player-artist" class="track-info-artist">Artist Name</p>
+            </div>
+        </div>
+        <div class="player-controls">
+            <button id="player-play-toggle" class="play-toggle-btn" aria-label="Play/Pause">
+                <i class="fas fa-play-circle"></i>
+            </button>
+        </div>
+        <div class="volume-controls-container">
+            <div class="volume-control">
+                <button id="player-mute-toggle" class="mute-btn"><i class="fas fa-volume-up"></i></button>
+                <input id="player-volume-slider" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+            </div>
+        </div>
+    </div>
+    
+    <div id="player-screen" class="player-screen">
+        <button id="player-screen-close" class="close-btn" aria-label="Close full screen player"><i class="fas fa-chevron-down"></i></button>
+        <div class="content">
+            <img id="ps-cover-art" src="" alt="" class="cover-art" />
+            <h1 id="ps-track-title" class="track-title">Track Title</h1>
+            <h2 id="ps-track-artist" class="track-artist">Artist Name</h2>
+        </div>
+        <div class="controls-wrapper">
+            <div class="progress">
+                <span id="ps-current-time" class="progress-time">0:00</span>
+                <input id="ps-seeker" type="range" min="0" max="100" value="0" />
+                <span id="ps-duration" class="progress-time">0:00</span>
+            </div>
+            <div class="main-controls">
+                <button id="ps-shuffle-btn" class="icon-btn" aria-label="Shuffle"><i class="fas fa-random"></i></button>
+                <button id="ps-prev-btn" class="prev-next-btn" aria-label="Previous track"><i class="fas fa-step-backward"></i></button>
+                <button id="ps-play-toggle-btn" class="play-btn" aria-label="Play/Pause"><i class="fas fa-play-circle"></i></button>
+                <button id="ps-next-btn" class="prev-next-btn" aria-label="Next track"><i class="fas fa-step-forward"></i></button>
+                <button id="ps-repeat-btn" class="icon-btn repeat-btn" aria-label="Repeat">
+                    <i class="fas fa-redo"></i>
+                    <span id="ps-repeat-one-indicator" class="repeat-one-indicator hidden">1</span>
+                </button>
+            </div>
+            <div class="mobile-volume">
+                 <div class="volume-control" style="display: flex;">
+                    <button id="ps-mute-toggle" class="mute-btn"><i class="fas fa-volume-up"></i></button>
+                    <input id="ps-volume-slider" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audio-player" crossOrigin="anonymous"></audio>
+    <input type="file" id="avatar-input" class="hidden" accept="image/*" />
+    <input type="file" id="local-tracks-input" class="hidden" accept="audio/*" multiple />
+
+    <script type="module" src="./index.tsx"></script>
+</body>
 </html>
