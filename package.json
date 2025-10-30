@@ -1,0 +1,21 @@
+{
+  "name": "lytte-songs",
+  "version": "1.0.0",
+  "description": "A modern music lover’s web app. This project is a static web app and does not use Vite. This file provides a 'start' command for Node.js-based hosting platforms.",
+  "private": true,
+  "main": "index.html",
+  "scripts": {
+    "start": "serve -s .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react",
+    "music",
+    "static"
+  ],
+  "author": "AI Assistant",
+  "license": "ISC",
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}
