@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { type Album, type Track, type User } from './types';
-import { sampleAlbum, sampleUser } from './mockData';
+import { type Album, type Track, type User } from './types.js';
+import { sampleAlbum, sampleUser } from './mockData.js';
+import { generateAlbumDescription } from './lib/api.js';
+
 
 // --- Helper & View Components ---
 
@@ -114,7 +116,7 @@ const TrackItem: React.FC<{
     </li>
 );
 
-const HomeView: React.FC<{ album: Album; onPlayTrack: (track: Track, context: Track[]) => void; onToggleLike: (trackId: number) => void; onDownloadTrack: (track: Track) => void; likedTrackIds: Set<number>; activeTrack: Track | null; isPlaying: boolean; }> = ({ album, onPlayTrack, onToggleLike, onDownloadTrack, likedTrackIds, activeTrack, isPlaying }) => {
+const HomeView: React.FC<{ album: Album; onPlayTrack: (track: Track, context: Track[]) => void; onToggleLike: (trackId: number) => void; onDownloadTrack: (track: Track) => void; likedTrackIds: Set<number>; activeTrack: Track | null; isPlaying: boolean; albumDescription: string; isGeneratingDescription: boolean; onGenerateDescription: () => void; }> = ({ album, onPlayTrack, onToggleLike, onDownloadTrack, likedTrackIds, activeTrack, isPlaying, albumDescription, isGeneratingDescription, onGenerateDescription }) => {
   return (
     <div className="bg-brand-surface rounded-lg shadow-lg p-4 sm:p-6">
         <div className="flex flex-col md:flex-row gap-6 md:gap-8">
@@ -132,6 +134,17 @@ const HomeView: React.FC<{ album: Album; onPlayTrack: (track: Track, context: Tr
                        <i className="fas fa-play"></i>
                        <span>Play Album</span>
                     </button>
+                    <button 
+                        onClick={onGenerateDescription}
+                        disabled={isGeneratingDescription}
+                        className="mt-4 ml-4 bg-brand-ui text-brand-text-secondary font-semibold py-3 px-6 rounded-full flex items-center gap-2 hover:bg-brand-ui-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <i className="fas fa-magic"></i>
+                        {isGeneratingDescription ? 'Generating...' : 'Generate Vibe'}
+                    </button>
+                    {albumDescription && (
+                        <p className="text-brand-text-secondary mt-4 italic">{albumDescription}</p>
+                    )}
                 </div>
             </div>
         </div>
@@ -334,6 +347,10 @@ function App() {
   const [duration, setDuration] = useState(0);
   const [showPlayerScreen, setShowPlayerScreen] = useState(false);
   const [localTracks, setLocalTracks] = useState<Track[]>([]);
+  
+  // Gemini State
+  const [albumDescription, setAlbumDescription] = useState('');
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
   // New Player Controls State
   const [volume, setVolume] = useState(1);
@@ -522,6 +539,15 @@ function App() {
     document.body.removeChild(link);
   }, []);
 
+  const handleGenerateDescription = async () => {
+    if (!album) return;
+    setIsGeneratingDescription(true);
+    setAlbumDescription('');
+    const desc = await generateAlbumDescription(album.title, album.artist);
+    setAlbumDescription(desc);
+    setIsGeneratingDescription(false);
+  };
+
   const allTracks = album?.tracks ?? [];
   const likedTracks = [...allTracks, ...localTracks].filter(track => likedTrackIds.has(track.id));
 
@@ -541,11 +567,11 @@ function App() {
             return <ProfilePanel user={user} onUserChange={setUser} />;
         case 'home':
         default:
-            return <HomeView album={album} {...commonProps} />;
+            return <HomeView album={album} {...commonProps} albumDescription={albumDescription} isGeneratingDescription={isGeneratingDescription} onGenerateDescription={handleGenerateDescription} />;
     }
   };
 
-  const activeAlbum = activeTrack?.url ? { id: 0, title: 'Local File', artist: 'You', coverUrl: "https://picsum.photos/seed/localfile/500/500", tracks: [] } : album;
+  const activeAlbum = activeTrack?.url?.startsWith('blob:') ? { id: 0, title: 'Local File', artist: 'You', coverUrl: "https://picsum.photos/seed/localfile/500/500", tracks: [] } : album;
 
   return (
     <div className={`font-sans ${activeTrack ? 'pb-20' : ''}`}>

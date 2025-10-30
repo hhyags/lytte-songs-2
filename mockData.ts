@@ -1,4 +1,4 @@
-import { type Album, type User } from './types';
+import { type Album, type User } from './types.js';
 
 export const sampleUser: User = {
   name: "Music Lover",

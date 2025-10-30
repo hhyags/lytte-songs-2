@@ -5,13 +5,18 @@
   "private": true,
   "main": "index.html",
   "scripts": {
+    "build": "tsc App.tsx index.tsx lib/api.ts mockData.ts types.ts --jsx react --esModuleInterop --skipLibCheck --target esnext --module esnext",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "react",
     "music",
-    "static"
+    "static",
+    "gemini"
   ],
   "author": "AI Assistant",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
 }
